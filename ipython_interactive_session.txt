@@ -1,0 +1,71 @@
+➜  tools  ipython
+Python 2.7.11 (default, Mar  1 2016, 18:40:10)
+Type "copyright", "credits" or "license" for more information.
+
+IPython 4.1.1 -- An enhanced Interactive Python.
+?         -> Introduction and overview of IPython's features.
+%quickref -> Quick reference.
+help      -> Python's own help system.
+object?   -> Details about 'object', use 'object??' for extra details.
+
+In [1]: import gzip
+
+In [2]: import csv
+
+In [3]: from itertools import islice
+
+In [4]: from collections import defaultdict
+
+In [5]: with gzip.GzipFile("ObservationData_vhltxod.csv.gz") as input_file:
+   ...:     obs_reader = csv.reader(input_file, delimiter=',')
+   ...:     for row in islice(obs_reader, 5):
+   ...:         print row
+   ...:
+['country', 'item', 'element', 'Unit', 'Date', 'Value']
+['Afghanistan', 'Almonds, with shell', 'Producer Price (Local Currency Unit/tonne)', 'Local Currency Unit/tonne', '1/1/1993 12:00:00 AM', '46000']
+['Afghanistan', 'Almonds, with shell', 'Producer Price (Local Currency Unit/tonne)', 'Local Currency Unit/tonne', '1/1/1994 12:00:00 AM', '50000']
+['Afghanistan', 'Almonds, with shell', 'Producer Price (Local Currency Unit/tonne)', 'Local Currency Unit/tonne', '1/1/1995 12:00:00 AM', '62000']
+['Afghanistan', 'Almonds, with shell', 'Producer Price (Local Currency Unit/tonne)', 'Local Currency Unit/tonne', '1/1/1996 12:00:00 AM', '50000']
+
+In [6]: sisal_prices = defaultdict(dict)
+
+In [7]: with gzip.GzipFile("ObservationData_vhltxod.csv.gz") as input_file:
+   ...:     obs_reader = csv.reader(input_file, delimiter=',')
+   ...:     for row in obs_reader:
+   ...:         country, product, element, unit, date, value = row
+   ...:         if product == 'Sisal' and unit == 'Standard Local Currency/tonne':
+   ...:             year = int(date[4:8])
+   ...:             sisal_prices[country][year] = float(value)
+   ...:
+
+In [8]: sisal_normalized_prices = defaultdict(float)
+
+In [9]: ncountries = 0
+
+In [10]: for country in sisal_prices:
+   ....:     if 2000 in sisal_prices[country]:
+   ....:         for year, value in sisal_prices[country].items():
+   ....:             sisal_normalized_prices[year] += value / sisal_prices[country][2000]
+   ....:         ncountries += 1
+   ....:
+
+In [11]: for i in sisal_normalized_prices:
+   ....:     sisal_normalized_prices[i] = sisal_normalized_prices[i] / ncountries
+   ....:
+
+In [12]: import matplotlib.pyplot as plt
+/opt/local/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/matplotlib/font_manager.py:273: UserWarning: Matplotlib is building the font cache using fc-list. This may take a moment.
+  warnings.warn('Matplotlib is building the font cache using fc-list. This may take a moment.')
+
+In [13]: xvals, yvals = sorted(sisal_normalized_prices), [sisal_normalized_prices[i] for i in sorted(sisal_normalized_prices)]
+
+In [14]: plt.plot(xvals, yvals)
+Out[14]: [<matplotlib.lines.Line2D at 0x110276f90>]
+
+In [15]: plt.xlabel("year")
+Out[15]: <matplotlib.text.Text at 0x1101fb9d0>
+
+In [16]: plt.ylabel("sisal price, normalized")
+Out[16]: <matplotlib.text.Text at 0x11021a910>
+
+In [17]: plt.show()
