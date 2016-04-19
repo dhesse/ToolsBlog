@@ -2,6 +2,7 @@ import pandas as pd
 import unittest
 
 def normalize(x):
+    assert(any(x.year == 2000))
     return pd.Series(x.Value.values /
                      sum(x.Value[x.year == 2000]),
                      index=x.year)
@@ -17,6 +18,9 @@ class TestNormalize(unittest.TestCase):
         pd.util.testing.assert_series_equal(
             normalize(test_data),
             expected_result)
+    def test_y2k_not_in_years_asserts(self):
+        with self.assertRaises(AssertionError):
+            normalize(pd.DataFrame({'year': []}))
 
 if __name__ == "__main__":
     unittest.main()
