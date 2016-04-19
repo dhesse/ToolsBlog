@@ -1,7 +1,18 @@
 import unittest
 import pandas as pd
 
+class NoDateInData(Exception):
+    pass
+
+class NoSisalInData(Exception):
+    pass
+
+class NoStandardCurrencyInData(Exception):
+    pass
+
 def extract_year(df):
+    if 'Date' not in df:
+        raise NoDateInData()
     df['year'] = df.Date.apply(lambda x: int(x[4:8]))
     return df
 
@@ -10,6 +21,11 @@ def clean_data(df):
               (df.Unit == 'Standard Local Currency/tonne')]
 
 class TestExtractYear(unittest.TestCase):
+    """You should test more here, connected to the expected string
+    format in the date column."""
+    def test_no_Date_column_raises(self):
+        with self.assertRaises(NoDateInData):
+            extract_year(pd.DataFrame({}))
     def test_known_values(self):
         test_data = pd.DataFrame({'Date': ["1-1-1234"]})
         expected_result = pd.Series([1234], name='year')
@@ -29,6 +45,8 @@ class TestCleanData(unittest.TestCase):
     def test_cleans_non_slc(self):
         result = clean_data(self.test_data)
         self.assertTrue(all(result.Unit == self.slc))
+    def test_no_sisal_raises(self):
+        pass
         
 if __name__ == "__main__":
     unittest.main()
