@@ -1,8 +1,17 @@
 import pandas as pd
 import unittest
 
+class NoYear2kError(Exception):
+    pass
+
+class DuplicateYearError(Exception):
+    pass
+
 def normalize(x):
-    assert(any(x.year == 2000))
+    if not any(x.year == 2000):
+        raise NoYear2kError()
+    if any(x.groupby('year').size() > 1):
+        raise DuplicateYearError
     return pd.Series(x.Value.values /
                      sum(x.Value[x.year == 2000]),
                      index=x.year)
@@ -18,9 +27,12 @@ class TestNormalize(unittest.TestCase):
         pd.util.testing.assert_series_equal(
             normalize(test_data),
             expected_result)
-    def test_y2k_not_in_years_asserts(self):
-        with self.assertRaises(AssertionError):
+    def test_y2k_not_in_years_raises(self):
+        with self.assertRaises(NoYear2kError):
             normalize(pd.DataFrame({'year': []}))
+    def test_duplicate_year_asserts(self):
+        with self.assertRaises(DuplicateYearError):
+            normalize(pd.DataFrame({'year': [2000]*2}))
 
 if __name__ == "__main__":
     unittest.main()
